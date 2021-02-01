@@ -51,3 +51,39 @@ internal class ZonePropertiesDto {
     lateinit var cwa: List<String>
     var radarStation = ""
 }
+
+internal class StationsDto {
+    lateinit var features: List<StationDto>
+}
+
+internal class StationDto {
+    lateinit var properties: StationPropertiesDto
+}
+
+internal class StationPropertiesDto {
+    lateinit var stationIdentifier: String
+}
+
+internal class GridPointsDto {
+    lateinit var properties: GridPointsPropertiesDto
+}
+
+internal class GridPointsPropertiesDto {
+    lateinit var gridId: String
+    lateinit var gridX: String
+    lateinit var gridY: String
+}
+
+internal class ForecastDto {
+    lateinit var properties: ForecastPropertiesDto
+}
+
+internal class ForecastPropertiesDto {
+    lateinit var updated: String
+    lateinit var periods: List<ForecastPeriodDto>
+}
+
+internal class ForecastPeriodDto {
+    lateinit var name: String
+    lateinit var detailedForecast: String
+}
