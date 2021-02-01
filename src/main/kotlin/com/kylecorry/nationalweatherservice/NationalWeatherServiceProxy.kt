@@ -3,6 +3,7 @@ package com.kylecorry.nationalweatherservice
 import com.google.gson.Gson
 import kotlinx.coroutines.coroutineScope
 import java.net.URL
+import java.net.URLEncoder
 import java.time.ZonedDateTime
 
 class NationalWeatherServiceProxy {
@@ -11,7 +12,7 @@ class NationalWeatherServiceProxy {
 
     suspend fun getAlerts(latitude: Double, longitude: Double): List<Alert> {
         return coroutineScope {
-            val alertUrl = "$baseURL/alerts/active?point=$latitude,$longitude"
+            val alertUrl = "$baseURL/alerts/active?point=${URLEncoder.encode("$latitude,$longitude", "utf-8")}"
             val json = URL(alertUrl).readText()
             val alertDto = Gson().fromJson(json, AlertDto::class.java)
             alertDto.features.filter { it.properties.status.toLowerCase() == "actual" }.map {
