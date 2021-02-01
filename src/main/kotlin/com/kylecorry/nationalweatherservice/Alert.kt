@@ -3,6 +3,7 @@ package com.kylecorry.nationalweatherservice
 import java.time.ZonedDateTime
 
 data class Alert(
+    val id: String,
     val event: String,
     val headline: String,
     val description: String,
