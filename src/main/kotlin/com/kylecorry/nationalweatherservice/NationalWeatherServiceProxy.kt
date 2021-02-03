@@ -24,11 +24,12 @@ class NationalWeatherServiceProxy(val apiKey: String) {
         }
     }
 
-    suspend fun getObservations(latitude: Double, longitude: Double, since: ZonedDateTime): String? {
+    suspend fun getObservations(latitude: Double, longitude: Double, since: ZonedDateTime): List<Observation> {
         val formattedTime = DateTimeFormatter.ofPattern("YYYY-MM-dd'T'HH:mm:SSZ").format(since)
-        val zone = getZone(latitude, longitude) ?: return null
-        // TODO: Convert to observations
-        return get("$baseURL/zones/forecast/${zone}/observations?start=${formattedTime}")
+        val zone = getZone(latitude, longitude) ?: return listOf()
+        val json = get("$baseURL/zones/forecast/${zone}/observations?start=${formattedTime}")
+        val observationsDto = Gson().fromJson(json, ObservationsDto::class.java)
+        return convertObservations(observationsDto)
     }
 
     suspend fun getForecast(latitude: Double, longitude: Double): List<Forecast> {
@@ -41,10 +42,11 @@ class NationalWeatherServiceProxy(val apiKey: String) {
         }
     }
 
-    suspend fun getLatestObservations(latitude: Double, longitude: Double): String? {
+    suspend fun getLatestObservations(latitude: Double, longitude: Double): Observation? {
         val zone = getZone(latitude, longitude) ?: return null
-        // TODO: Convert to observation
-        return get("$baseURL/zones/forecast/${zone}/observations?limit=1")
+        val json = get("$baseURL/zones/forecast/${zone}/observations?limit=1")
+        val observationsDto = Gson().fromJson(json, ObservationsDto::class.java)
+        return convertObservations(observationsDto).firstOrNull()
     }
 
     private suspend fun getZone(latitude: Double, longitude: Double): String? {
@@ -97,4 +99,37 @@ class NationalWeatherServiceProxy(val apiKey: String) {
 
     }
 
+    private fun convertObservations(dto: ObservationsDto): List<Observation> {
+        // TODO: Do unit conversions to metric if needed
+        return dto.features.map {
+            val p = it.properties
+            Observation(
+                ZonedDateTime.parse(p.timestamp),
+                weather = p.presentWeather.filter { weather -> weather.weather != null }.map { weather ->
+                    WeatherObservation(weather.weather!!, weather.intensity)
+                },
+                elevation = p.elevation?.value,
+                temperature = p.temperature?.value,
+                dewpoint = p.dewpoint?.value,
+                windDirection = p.windDirection?.value,
+                windSpeed = p.windSpeed?.value,
+                windGust = p.windGust?.value,
+                barometricPressure = p.barometricPressure?.value,
+                seaLevelPressure = p.seaLevelPressure?.value,
+                visibility = p.visibility?.value,
+                maxTemperatureLast24Hours = p.maxTemperatureLast24Hours?.value,
+                minTemperatureLast24Hours = p.minTemperatureLast24Hours?.value,
+                precipitationLast3Hours = p.precipitationLast3Hours?.value,
+                relativeHumidity = p.relativeHumidity?.value,
+                windChill = p.windChill?.value,
+                heatIndex = p.heatIndex?.value,
+                clouds = p.cloudLayers.filter { cloud -> cloud.amount != null }.map { cloud ->
+                    CloudObservation(
+                        amount = cloud.amount!!,
+                        base = cloud.base?.value
+                    )
+                }
+            )
+        }
+    }
 }
