@@ -70,7 +70,7 @@ class NationalWeatherServiceProxy(val apiKey: String) {
                     "${latitude},${longitude}",
                     "utf-8"
                 )
-            }"
+            }&status=actual"
         )
 
         val alertDto = Gson().fromJson(json, AlertDto::class.java)
@@ -84,19 +84,27 @@ class NationalWeatherServiceProxy(val apiKey: String) {
                     .replace("\\newline", "\n\n"),
                 it.properties.instruction,
                 it.properties.parameters.HazardType,
-                ZonedDateTime.parse(it.properties.sent),
-                ZonedDateTime.parse(it.properties.effective),
-                ZonedDateTime.parse(it.properties.onset),
-                ZonedDateTime.parse(it.properties.expires),
-                ZonedDateTime.parse(it.properties.ends),
+                parseOrNull(it.properties.sent),
+                parseOrNull(it.properties.effective),
+                parseOrNull(it.properties.onset),
+                parseOrNull(it.properties.expires),
+                parseOrNull(it.properties.ends),
                 it.properties.category,
-                it.properties.severity,
-                it.properties.certainty,
-                it.properties.urgency
+                AlertSeverity.values().firstOrNull { v -> v.name.toLowerCase() == it.properties.severity.toLowerCase() } ?: AlertSeverity.Unknown,
+                AlertCertainty.values().firstOrNull { v -> v.name.toLowerCase() == it.properties.certainty.toLowerCase() } ?: AlertCertainty.Unknown,
+                AlertUrgency.values().firstOrNull { v -> v.name.toLowerCase() == it.properties.urgency.toLowerCase() } ?: AlertUrgency.Unknown
             )
         }
 
 
+    }
+
+    private fun parseOrNull(date: String?): ZonedDateTime? {
+        return try {
+            ZonedDateTime.parse(date)
+        } catch (e: Exception){
+            null
+        }
     }
 
     private fun convertObservations(dto: ObservationsDto): List<Observation> {
